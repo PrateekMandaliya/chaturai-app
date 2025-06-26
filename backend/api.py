@@ -23,6 +23,7 @@ app.add_middleware(
 
 # --- Global variables (lazy-loaded later) ---
 embedding_model = None
+vectorstore = None
 
 # --- LLM Setup (safe to preload) ---
 llm = ChatGoogleGenerativeAI(
@@ -87,11 +88,12 @@ async def ask_question(request: QueryRequest):
     if embedding_model is None:
         embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-    vectorstore = FAISS.load_local(
-        folder_path="faiss_store",
-        embeddings=embedding_model,
-        allow_dangerous_deserialization=True
-    )
+    if vectorstore is None:
+        vectorstore = FAISS.load_local(
+            folder_path="faiss_store",
+            embeddings=embedding_model,
+            allow_dangerous_deserialization=True
+        )
 
     retrieved = vectorstore.similarity_search_with_relevance_scores(query, k=5)
 

@@ -7,21 +7,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_full_text(url):
+def get_full_text(url, max_chars=800):
     try:
         article = Article(url)
         article.download()
         article.parse()
-        return article.text
+        return article.text[:max_chars].strip()
     except:
         return ""
 
 API_KEY = os.getenv("GNEWS_API_KEY")
 if not API_KEY:
     raise RuntimeError("❌ GNEWS_API_KEY not set in the environment!")
+
 BASE_URL = "https://gnews.io/api/v4/top-headlines"
 LANG = "en"
-PAGE_SIZE = 10
+PAGE_SIZE = 3  # ⬅️ Reduced to 3 per category for memory control
 PAUSE_SECONDS = 2
 
 # Define varied queries to maximize uniqueness
@@ -70,7 +71,7 @@ try:
                 continue
             seen_urls.add(url)
 
-            content = article.get('content', "") or ""
+            content = article.get('content', "")[:800].strip()
             full_text = get_full_text(url)
 
             all_articles.append({
