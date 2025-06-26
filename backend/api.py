@@ -86,7 +86,11 @@ async def ask_question(request: QueryRequest):
 
     # Lazy-load embedding model on first request
     if embedding_model is None:
-        embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/paraphrase-albert-small-v2",
+            cache_folder="/app/model_cache"
+        )
+    # Lazy-load vectorstore on first request
 
     if vectorstore is None:
         vectorstore = FAISS.load_local(

@@ -20,5 +20,7 @@ RUN chmod +x /app/cron/update_data.sh && \
     crontab /etc/cron.d/daily-news-cron && \
     touch /var/log/cron.log
 
+RUN mkdir -p /app/model_cache
+
 # Start cron and the FastAPI app
 CMD cron && uvicorn api:app --host 0.0.0.0 --port 8000
