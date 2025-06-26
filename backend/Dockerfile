@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code and cron job
 COPY . /app/
-COPY ../cron/update_data.sh /app/cron/update_data.sh
+COPY cron/update_data.sh /app/cron/update_data.sh
 COPY cronjob /etc/cron.d/daily-news-cron
 
 # Set permissions and register the cron job
