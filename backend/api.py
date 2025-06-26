@@ -11,7 +11,7 @@ import os
 # --- Load environment variables ---
 load_dotenv(dotenv_path=".env")
 
-# --- Setup FastAPI app ---
+# --- FastAPI app setup ---
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -21,7 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- LLM Setup (safe to load on startup) ---
+# --- Global variables (lazy-loaded later) ---
+embedding_model = None
+
+# --- LLM Setup (safe to preload) ---
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash",
     temperature=0.3,
@@ -57,29 +60,33 @@ Answer:
 """
 )
 
-# --- Helper: Truncate text ---
+# --- Helper: Truncate long text ---
 def truncate(text, max_chars=800):
     if len(text) <= max_chars:
         return text
     last_period = text.rfind(".", 0, max_chars)
     return text[:last_period + 1] if last_period != -1 else text[:max_chars] + "..."
 
-# --- Request/Response Schemas ---
+# --- Schemas ---
 class QueryRequest(BaseModel):
     question: str
 
 class QueryResponse(BaseModel):
     answer: str
 
-# --- Main /ask Endpoint ---
+# --- /ask Endpoint ---
 @app.post("/ask", response_model=QueryResponse)
 async def ask_question(request: QueryRequest):
+    global embedding_model
+
     query = request.question.strip()
     if not query:
         return {"answer": "Please enter a valid question."}
 
-    # Load model and vectorstore at request time
-    embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    # Lazy-load embedding model on first request
+    if embedding_model is None:
+        embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
     vectorstore = FAISS.load_local(
         folder_path="faiss_store",
         embeddings=embedding_model,
